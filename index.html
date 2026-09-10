@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#121212">
+<title>MyGain Chauffeur Pro - Québec</title>
+<style>
+:root{--bg:#101010;--card:#1c1c1c;--input:#292929;--text:#fff;--muted:#aaa;--green:#4ade80;--red:#ef4444;--blue:#3b82f6;--yellow:#f59e0b;--border:#383838}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;padding:16px 10px}.app{max-width:760px;margin:auto}
+header{text-align:center;margin-bottom:18px}h1{margin:0;font-size:28px}h1 span{color:var(--green)}header p{color:var(--muted);font-size:13px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:16px;margin-bottom:15px}.card h2{font-size:18px;margin:0 0 14px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.row{display:flex;gap:10px}.row>*{flex:1}.field{margin-bottom:12px}label{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+input,select{width:100%;background:var(--input);border:1px solid var(--border);color:#fff;border-radius:8px;padding:11px;font-size:16px}input:focus,select:focus{outline:0;border-color:var(--green)}
+button{border:0;border-radius:8px;padding:11px 13px;font-weight:700;cursor:pointer}.primary{background:var(--green);color:#000}.blue{background:var(--blue);color:#fff}.danger{background:transparent;color:var(--red);border:1px solid var(--red)}.yellow{background:var(--yellow);color:#000}
+.small{font-size:12px;padding:7px 9px}.hint{font-size:11px;color:var(--muted);margin-top:5px}
+.settings{display:grid;grid-template-columns:1fr 1fr;gap:10px}.statgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--input);padding:12px;border-radius:9px;text-align:center}.stat span{display:block;color:var(--muted);font-size:11px}.stat b{font-size:18px}.full{grid-column:1/-1}.net{border:1px solid var(--green);background:#4ade8015}.net b{color:var(--green);font-size:24px}
+.payables{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}.pay{background:#171717;border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center}.pay small{display:block;color:var(--muted);font-size:10px}.pay b{font-size:16px}
+.calendar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.calendar-title{font-weight:800}.calgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.dow{text-align:center;color:var(--muted);font-size:10px;padding:4px}.day{min-height:42px;background:var(--input);border:1px solid transparent;color:#fff;border-radius:7px;cursor:pointer;font-size:12px}.day.empty{background:transparent;cursor:default}.day.has{border-color:#555}.day.selected{border-color:var(--green);box-shadow:inset 0 0 0 1px var(--green)}.day.range{background:#4ade8018;border-color:#4ade8066}.day .amt{display:block;color:var(--green);font-size:9px;margin-top:2px}.day .count{display:block;color:var(--muted);font-size:8px}
+.history{list-style:none;padding:0;margin:0;max-height:520px;overflow:auto}.item{background:var(--input);border-left:4px solid var(--green);border-radius:8px;padding:11px;margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}.item.exp{border-left-color:var(--red)}.details{font-size:11px;color:var(--muted);margin-top:3px}.actions{display:flex;gap:5px;align-items:flex-start}.actions button{padding:6px 8px;font-size:11px}
+.preview{max-height:180px;overflow:auto;margin-top:10px;border:1px solid var(--border);border-radius:8px}.preview table{width:100%;border-collapse:collapse;font-size:11px}.preview th,.preview td{padding:6px;border-bottom:1px solid var(--border);text-align:left}.status{text-align:center;color:var(--muted);font-size:12px;min-height:18px;margin-top:7px}
+@media(max-width:560px){.row{flex-direction:column}.settings,.statgrid{grid-template-columns:1fr}.full{grid-column:auto}.payables{grid-template-columns:1fr}.item{flex-direction:column}.actions button{flex:1}}
+@media print{body{background:#fff;color:#000}.card{background:#fff;color:#000;border-color:#ccc;box-shadow:none}.actions,button,.calendar-head,.calgrid,.settings,.hint,.status{display:none!important}.stat,.pay{background:#fff;color:#000;border-color:#ccc}}
+</style>
+</head>
+<body>
+<div class="app">
+<header><h1>MyGain <span>Chauffeur Pro</span></h1><p>Québec • courses, déductions, impôt et rendement horaire</p></header>
+
+<section class="card">
+<h2>⚙️ Paramètres d'impôt</h2>
+<div class="settings">
+<div><label for="taxRate">Taux de déduction d'impôt (%)</label><input id="taxRate" type="number" min="0" max="100" step="0.1" value="15"></div>
+<div><label>Règle</label><input value="Impôt = % du brut carte/coupon" disabled></div>
+</div>
+<div class="hint">Le taux s'applique uniquement au montant brut des courses payées par carte ou coupon. Les taxes, la redevance et les frais restent séparés.</div>
+</section>
+
+<section class="card">
+<h2>📅 Choisir la période</h2>
+<div class="calendar-head">
+<button id="prevMonth" class="blue small" type="button">‹</button><div id="monthTitle" class="calendar-title"></div><button id="nextMonth" class="blue small" type="button">›</button>
+</div>
+<div id="calendar"></div>
+<div class="row" style="margin-top:10px">
+<div><label for="rangeStart">Date de début</label><input id="rangeStart" type="date"></div>
+<div><label for="rangeEnd">Date de fin</label><input id="rangeEnd" type="date"></div>
+</div>
+<div class="row" style="margin-top:10px">
+<button id="applyRange" class="primary" type="button">🔎 Calculer la période</button>
+<button id="today" class="blue" type="button">Aujourd'hui</button>
+<button id="allDates" class="blue" type="button">Toutes les dates</button>
+</div>
+<div class="hint">Tu peux entrer directement une période, par exemple du 2 au 5, ou cliquer deux dates dans le calendrier.</div>
+</section>
+
+<section class="card">
+<h2 id="formTitle">➕ Nouvelle entrée</h2>
+<form id="entryForm">
+<input id="editId" type="hidden">
+<div class="row field">
+<div><label for="type">Type</label><select id="type"><option value="course">🚖 Course</option><option value="depense">💸 Dépense</option></select></div>
+<div id="paymentBox"><label for="payment">Paiement</label><select id="payment"><option value="cash">💵 Cash</option><option value="carte">💳 Carte</option><option value="coupon">🎟️ Coupon</option></select></div>
+</div>
+<div class="field"><label for="amount">Montant brut $</label><input id="amount" type="number" min="0" step="0.01" required></div>
+<div id="courseFields">
+<div class="row field">
+<div><label for="tps">TPS à remettre $</label><input id="tps" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="tvq">TVQ à remettre $</label><input id="tvq" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="redevance">Redevance à remettre $</label><input id="redevance" type="number" min="0" step="0.01" value="0"></div>
+</div>
+<div class="row field">
+<div><label for="tip">Pourboire $</label><input id="tip" type="number" min="0" step="0.01" value="0"></div>
+<div><label for="courseTime">Heure de la course</label><input id="courseTime" type="time" required></div>
+</div>
+</div>
+<div id="expenseFields" style="display:none">
+<div class="field"><label for="expenseDate">Date de la dépense</label><input id="expenseDate" type="date"></div>
+<div class="field"><label for="expenseCategory">Catégorie de dépense</label><select id="expenseCategory">
+<option value="essence">⛽ Essence / gaz</option><option value="location">🏠 Location</option>
+<option value="nourriture">🍔 Nourriture</option><option value="cigarettes">🚬 Cigarettes</option>
+<option value="lave_auto">🧼 Lave-auto</option><option value="autres">📦 Autres</option>
+</select></div></div>
+<div class="row"><button class="primary" id="submitBtn" type="submit">Enregistrer</button><button class="danger" id="cancelBtn" type="button" style="display:none">Annuler</button></div>
+<div id="status" class="status"></div>
+</form>
+</section>
+
+<section class="card">
+<h2>📊 Résultat de la période sélectionnée</h2>
+<div class="statgrid">
+<div class="stat"><span>Brut courses</span><b id="gross">0.00 $</b></div>
+<div class="stat"><span>Pourboires</span><b id="tips">0.00 $</b></div>
+<div class="stat"><span>6,3 % frais carte/coupon</span><b id="fees63">0.00 $</b></div>
+<div class="stat"><span>Impôt estimé</span><b id="incomeTax">0.00 $</b></div>
+<div class="stat"><span>Dépenses</span><b id="expenses">0.00 $</b></div>
+<div class="stat"><span>Brut + pourboires</span><b id="grossTips">0.00 $</b></div>
+<div class="stat net"><span>💵 NET CASH</span><b id="netCash">0.00 $</b></div>
+<div class="stat net"><span>💳 NET CARTES</span><b id="netCards">0.00 $</b></div>
+<div class="stat net"><span>🎟️ NET COUPONS</span><b id="netCoupons">0.00 $</b></div>
+<div class="stat full net"><span>💰 NET TOTAL</span><b id="netTotal">0.00 $</b></div><div class="stat full net"><span>🔥 VRAI NET APRÈS DÉPENSES</span><b id="trueNet">0.00 $</b></div>
+<div class="full"><h3>💸 Détail des dépenses</h3></div>
+<div class="stat"><span>⛽ Essence / gaz</span><b id="expEssence">0.00 $</b></div>
+<div class="stat"><span>🏠 Location</span><b id="expLocation">0.00 $</b></div>
+<div class="stat"><span>🍔 Nourriture</span><b id="expNourriture">0.00 $</b></div>
+<div class="stat"><span>🚬 Cigarettes</span><b id="expCigarettes">0.00 $</b></div>
+<div class="stat"><span>🧼 Lave-auto</span><b id="expLaveAuto">0.00 $</b></div>
+<div class="stat"><span>📦 Autres</span><b id="expAutres">0.00 $</b></div>
+<div class="stat full net"><span>⏱️ $/H BRUT DE LA JOURNÉE</span><b id="hourly">0.00 $/h</b><small class="hint">De la première course de la période à la dernière course de la période. Il faut au moins 2 heures de course enregistrées.</small></div>
+</div>
+<div class="payables">
+<div class="pay"><small>TPS à remettre</small><b id="tpsDue">0.00 $</b></div>
+<div class="pay"><small>TVQ à remettre</small><b id="tvqDue">0.00 $</b></div>
+<div class="pay"><small>Redevance à remettre</small><b id="feeDue">0.00 $</b></div>
+</div>
+</section>
+
+<section class="card">
+<h2>📥 Importer un fichier de courses</h2>
+<div class="field"><label for="importFile">Fichier CSV ou Excel</label><input id="importFile" type="file" accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"></div>
+<div class="hint">Colonnes reconnues automatiquement : date, heure, montant brut/montant, paiement/mode, pourboire. Les fichiers Excel .xlsx et .xls sont aussi acceptés. Le fichier modèle inclus montre le format exact. Les lignes invalides sont refusées et signalées avant import.</div>
+<div id="preview" class="preview" style="display:none"></div>
+<div class="row" style="margin-top:10px"><button id="downloadTemplate" class="blue" type="button">⬇️ Modèle CSV</button><button id="importBtn" class="primary" type="button" disabled>Importer les lignes valides</button></div>
+<div id="importStatus" class="status"></div>
+</section>
+
+<section class="card">
+<h2><span>📋 Historique de la période</span><button id="print" class="primary small" type="button">🖨️ Imprimer</button></h2>
+<ul id="history" class="history"></ul>
+</section>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+(function(){
+"use strict";
+var KEY="mygain_chauffeur_pro_v4";
+var entries=[],selectedDate="",rangeStart="",rangeEnd="",calendarDate=new Date(),importRows=[];
+try{entries=JSON.parse(localStorage.getItem(KEY)||"[]");if(!Array.isArray(entries))entries=[];}catch(e){entries=[];}
+function $(id){return document.getElementById(id);}
+function num(v){var n=Number(v);return isFinite(n)?n:0;}
+function money(v){return num(v).toFixed(2)+" $";}
+function save(){localStorage.setItem(KEY,JSON.stringify(entries));}
+function pad(n){return String(n).padStart(2,"0");}
+function todayStr(){var d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function tsFor(date,time){var p=date.split("-").map(Number),t=(time||"00:00").split(":").map(Number);return new Date(p[0],p[1]-1,p[2],t[0]||0,t[1]||0,0,0).getTime();}
+function dateOf(x){if(x.date)return x.date;return new Date(num(x.timestamp)).getFullYear()+"-"+pad(new Date(num(x.timestamp)).getMonth()+1)+"-"+pad(new Date(num(x.timestamp)).getDate());}
+function timeOf(x){if(x.time)return x.time;var d=new Date(num(x.timestamp));return pad(d.getHours())+":"+pad(d.getMinutes());}
+function fmtDateTime(x){return dateOf(x)+" "+timeOf(x);}
+function taxRate(){return Math.max(0,Math.min(100,num($("taxRate").value)))/100;}
+$("taxRate").value=localStorage.getItem("mygain_tax_rate")||"15";
+$("taxRate").addEventListener("input",function(){localStorage.setItem("mygain_tax_rate",$("taxRate").value);render();});
+
+function calcCourse(x){
+ var gross=num(x.amount),tip=num(x.tip),tps=num(x.tps),tvq=num(x.tvq),red=num(x.redevance);
+ var payment=x.payment||"cash";
+ var card=(payment==="carte"||payment==="coupon");
+ var fee63=card?(gross+tip)*.063:0;
+ var tax=card?gross*taxRate():0;
+ var net=gross+tip-fee63;
+ return {gross:gross,tip:tip,tps:tps,tvq:tvq,red:red,fee63:fee63,tax:tax,net:net,
+ isCash:payment==="cash",isCard:payment==="carte",isCoupon:payment==="coupon"};
+}
+function syncFields(){
+ var course=$("type").value==="course";
+ $("paymentBox").style.display=course?"block":"none";
+ $("courseFields").style.display=course?"block":"none";
+ $("expenseFields").style.display=course?"none":"block";
+ $("amount").required=true;
+ if(course && $("payment").value==="cash" && !$("editId").value){$("tps").value="0";$("tvq").value="0";$("redevance").value="0";}
+}
+function autoTaxes(){
+ if($("type").value!=="course"||$("payment").value==="cash"){if($("type").value==="course"){$("tps").value="0";$("tvq").value="0";$("redevance").value="0";}return;}
+ var gross=num($("amount").value),ht=gross/1.14975;
+ $("tps").value=(ht*.05).toFixed(2);$("tvq").value=(ht*.09975).toFixed(2);
+ if(!$("editId").value && num($("redevance").value)===0)$("redevance").value="0.90";
+}
+function renderCalendar(){
+ var y=calendarDate.getFullYear(),m=calendarDate.getMonth();
+ $("monthTitle").textContent=new Intl.DateTimeFormat("fr-CA",{month:"long",year:"numeric"}).format(calendarDate);
+ var first=new Date(y,m,1).getDay();first=(first+6)%7;
+ var days=new Date(y,m+1,0).getDate(),html="<div class='calgrid'>";
+ ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"].forEach(function(d){html+="<div class='dow'>"+d+"</div>";});
+ for(var i=0;i<first;i++)html+="<button class='day empty' type='button'></button>";
+ for(var d=1;d<=days;d++){
+   var ds=y+"-"+pad(m+1)+"-"+pad(d),list=entries.filter(function(x){return dateOf(x)===ds&&x.type==="course";});
+   var total=list.reduce(function(s,x){return s+num(x.amount)+num(x.tip);},0);
+   html+="<button type='button' class='day "+(list.length?"has ":"")+(selectedDate===ds?"selected ":"")+(rangeStart&&rangeEnd&&ds>=rangeStart&&ds<=rangeEnd?"range ":"")+(rangeStart===ds||rangeEnd===ds?"selected ":"")+"' data-date='"+ds+"'>"+d+(list.length?"<span class='amt'>"+total.toFixed(0)+"$</span><span class='count'>"+list.length+" course"+(list.length>1?"s":"")+"</span>":"")+"</button>";
+ }
+ html+="</div>";$("calendar").innerHTML=html;
+}
+function dayEntries(){
+  if(rangeStart&&rangeEnd){
+    return entries.filter(function(x){var d=dateOf(x);return d>=rangeStart&&d<=rangeEnd;});
+  }
+  if(rangeStart){
+    return entries.filter(function(x){return dateOf(x)===rangeStart;});
+  }
+  return entries.slice();
+}
+function expenseLabel(cat){
+ var labels={essence:"⛽ Essence / gaz",location:"🏠 Location",nourriture:"🍔 Nourriture",cigarettes:"🚬 Cigarettes",lave_auto:"🧼 Lave-auto",autres:"📦 Autres"};
+ return labels[cat]||labels.autres;
+}
+function expenseLabel(cat){
+ var labels={essence:"⛽ Essence / gaz",location:"🏠 Location",nourriture:"🍔 Nourriture",cigarettes:"🚬 Cigarettes",lave_auto:"🧼 Lave-auto",autres:"📦 Autres"};
+ return labels[cat]||labels.autres;
+}
+function render(){
+ renderCalendar();
+ var list=dayEntries(),gross=0,tips=0,fee63=0,tax=0,tps=0,tvq=0,red=0,expenses=0;
+ var netCash=0,netCards=0,netCoupons=0,courses=[];
+ var expByCat={essence:0,location:0,nourriture:0,cigarettes:0,lave_auto:0,autres:0};
+ list.forEach(function(x){
+  if(x.type==="course"){
+   var c=calcCourse(x);
+   gross+=c.gross;tips+=c.tip;fee63+=c.fee63;tax+=c.tax;tps+=c.tps;tvq+=c.tvq;red+=c.red;
+   if(c.isCash)netCash+=c.net;
+   else if(c.isCard)netCards+=c.net;
+   else if(c.isCoupon)netCoupons+=c.net;
+   courses.push(x);
+  }else{
+   var e=num(x.amount),cat=x.category||"autres";
+   expenses+=e;
+   if(expByCat[cat]===undefined)cat="autres";
+   expByCat[cat]+=e;
+  }
+ });
+ courses.sort(function(a,b){return num(a.timestamp)-num(b.timestamp);});
+ var netTotal=netCash+netCards+netCoupons;
+ var trueNet=netTotal-expenses;
+ var hourly=0;
+ if(courses.length>=2){var elapsed=(num(courses[courses.length-1].timestamp)-num(courses[0].timestamp))/3600000;if(elapsed>0)hourly=(gross+tips)/elapsed;}
+ $("gross").textContent=money(gross);$("tips").textContent=money(tips);$("fees63").textContent=money(fee63);$("incomeTax").textContent=money(tax);$("expenses").textContent=money(expenses);$("grossTips").textContent=money(gross+tips);
+ $("netCash").textContent=money(netCash);$("netCards").textContent=money(netCards);$("netCoupons").textContent=money(netCoupons);$("netTotal").textContent=money(netTotal);
+ if($("trueNet"))$("trueNet").textContent=money(trueNet);
+ if($("expEssence"))$("expEssence").textContent=money(expByCat.essence);
+ if($("expLocation"))$("expLocation").textContent=money(expByCat.location);
+ if($("expNourriture"))$("expNourriture").textContent=money(expByCat.nourriture);
+ if($("expCigarettes"))$("expCigarettes").textContent=money(expByCat.cigarettes);
+ if($("expLaveAuto"))$("expLaveAuto").textContent=money(expByCat.lave_auto);
+ if($("expAutres"))$("expAutres").textContent=money(expByCat.autres);
+ $("hourly").textContent=money(hourly)+"/h";$("tpsDue").textContent=money(tps);$("tvqDue").textContent=money(tvq);$("feeDue").textContent=money(red);
+ var sorted=list.slice().sort(function(a,b){return num(b.timestamp)-num(a.timestamp);});
+ $("history").innerHTML=sorted.length?sorted.map(function(x){
+  if(x.type==="course"){var c=calcCourse(x);return "<li class='item'><div><b>🚖 "+x.payment.toUpperCase()+" — "+money(c.gross)+" brut</b><div class='details'>"+fmtDateTime(x)+" • Pourboire "+money(c.tip)+"<br>TPS "+money(c.tps)+" • TVQ "+money(c.tvq)+" • Redevance "+money(c.red)+" • 6,3% "+money(c.fee63)+" • Impôt "+money(c.tax)+"<br><b>Net: "+money(c.net)+"</b></div></div><div class='actions'><button class='yellow' data-edit='"+x.id+"'>Modifier</button><button class='danger' data-del='"+x.id+"'>X</button></div></li>";}
+  return "<li class='item exp'><div><b>💸 Dépense — "+money(x.amount)+"</b><div class='details'>"+expenseLabel(x.category)+" • "+fmtDateTime(x)+"</div></div><div class='actions'><button class='yellow' data-edit='"+x.id+"'>Modifier</button><button class='danger' data-del='"+x.id+"'>X</button></div></li>";
+ }).join(""):"<li style='text-align:center;color:#888;padding:20px'>Aucune entrée pour cette date.</li>";
+}
+
+$("calendar").addEventListener("click",function(e){
+  var b=e.target.closest("[data-date]");if(!b)return;
+  var d=b.getAttribute("data-date");
+  if(!rangeStart||rangeEnd){
+    rangeStart=d;rangeEnd="";
+  }else if(d<rangeStart){
+    rangeEnd=rangeStart;rangeStart=d;
+  }else{
+    rangeEnd=d;
+  }
+  selectedDate=rangeStart;
+  $("rangeStart").value=rangeStart;
+  $("rangeEnd").value=rangeEnd;
+  $("expenseDate").value=selectedDate;
+  var p=d.split("-");calendarDate=new Date(Number(p[0]),Number(p[1])-1,1);
+  render();
+});
+$("prevMonth").onclick=function(){calendarDate.setMonth(calendarDate.getMonth()-1);renderCalendar();};
+$("nextMonth").onclick=function(){calendarDate.setMonth(calendarDate.getMonth()+1);renderCalendar();};
+$("applyRange").onclick=function(){
+  var a=$("rangeStart").value,b=$("rangeEnd").value;
+  if(!a){alert("Choisis une date de début.");return;}
+  if(!b)b=a;
+  if(b<a){var t=a;a=b;b=t;}
+  rangeStart=a;rangeEnd=b;selectedDate=a;
+  $("rangeStart").value=a;$("rangeEnd").value=b;$("expenseDate").value=a;
+  var p=a.split("-");calendarDate=new Date(Number(p[0]),Number(p[1])-1,1);
+  render();
+};
+$("rangeStart").addEventListener("change",function(){rangeStart=this.value;if(rangeEnd&&rangeEnd<rangeStart)rangeEnd=rangeStart;renderCalendar();});
+$("rangeEnd").addEventListener("change",function(){rangeEnd=this.value;if(rangeStart&&rangeEnd<rangeStart){var t=rangeStart;rangeStart=rangeEnd;rangeEnd=t;}render();});
+$("today").onclick=function(){
+  selectedDate=todayStr();rangeStart=selectedDate;rangeEnd=selectedDate;
+  $("rangeStart").value=selectedDate;$("rangeEnd").value=selectedDate;$("expenseDate").value=selectedDate;
+  var p=selectedDate.split("-");calendarDate=new Date(Number(p[0]),Number(p[1])-1,1);render();
+};
+$("allDates").onclick=function(){
+  selectedDate="";rangeStart="";rangeEnd="";
+  $("rangeStart").value="";$("rangeEnd").value="";$("expenseDate").value=todayStr();render();
+};
+$("type").addEventListener("change",function(){syncFields();autoTaxes();});
+$("payment").addEventListener("change",function(){syncFields();autoTaxes();});
+$("amount").addEventListener("input",autoTaxes);
+
+$("entryForm").addEventListener("submit",function(e){
+ e.preventDefault();
+ var type=$("type").value,pay=type==="course"?$("payment").value:"depense",date=type==="course"?(selectedDate||rangeStart||todayStr()):($("expenseDate").value||selectedDate||rangeStart||todayStr()),time=type==="course"?$("courseTime").value:"12:00";
+ var id=$("editId").value,old=id?entries.find(function(x){return String(x.id)===String(id);}):null;
+ if(type==="course"&&!date){alert("Choisis une date.");return;}
+ var x={id:id?Number(id):Date.now()+Math.floor(Math.random()*999),timestamp:old?old.timestamp:tsFor(date,time),date:date,time:time,type:type,payment:pay,amount:num($("amount").value),tps:type==="course"&&pay!=="cash"?num($("tps").value):0,tvq:type==="course"&&pay!=="cash"?num($("tvq").value):0,redevance:type==="course"&&pay!=="cash"?num($("redevance").value):0,tip:type==="course"?num($("tip").value):0,category:type==="depense"?($("expenseCategory").value||"autres"):""};
+ if(old)entries[entries.indexOf(old)]=x;else entries.push(x);
+ save();selectedDate=date;$("rangeStart").value=rangeStart;$("rangeEnd").value=rangeEnd;calendarDate=new Date(Number(date.slice(0,4)),Number(date.slice(5,7))-1,1);resetForm();render();$("status").textContent=old?"Entrée modifiée.":"Entrée enregistrée.";setTimeout(function(){$("status").textContent="";},1600);
+});
+function resetForm(){$("entryForm").reset();$("editId").value="";$("formTitle").textContent="➕ Nouvelle entrée";$("submitBtn").textContent="Enregistrer";$("cancelBtn").style.display="none";$("expenseDate").value=selectedDate||todayStr();$("courseTime").value=new Date().toTimeString().slice(0,5);$("tps").value="0";$("tvq").value="0";$("redevance").value="0";$("tip").value="0";syncFields();}
+$("cancelBtn").onclick=resetForm;
+$("history").addEventListener("click",function(e){var id=Number(e.target.getAttribute("data-edit")||e.target.getAttribute("data-del"));if(!id)return;if(e.target.hasAttribute("data-del")){if(confirm("Supprimer cette entrée ?")){entries=entries.filter(function(x){return x.id!==id;});save();render();}return;}var x=entries.find(function(y){return y.id===id;});if(!x)return;selectedDate=dateOf(x);$("rangeStart").value=rangeStart;$("rangeEnd").value=rangeEnd;calendarDate=new Date(Number(selectedDate.slice(0,4)),Number(selectedDate.slice(5,7))-1,1);$("editId").value=x.id;$("type").value=x.type;syncFields();$("payment").value=x.payment;$("amount").value=x.amount;$("tps").value=x.tps;$("tvq").value=x.tvq;$("redevance").value=x.redevance;$("tip").value=x.tip;$("courseTime").value=timeOf(x);$("expenseDate").value=dateOf(x);$("formTitle").textContent="✏️ Modifier l'entrée";$("submitBtn").textContent="Mettre à jour";$("cancelBtn").style.display="block";window.scrollTo({top:0,behavior:"smooth"});});
+$("print").onclick=function(){window.print();};
+
+function parseCSV(text){
+ var lines=text.replace(/\r/g,"").split("\n").filter(function(l){return l.trim()!=="";});if(!lines.length)return {headers:[],rows:[]};
+ function split(line){var out=[],cur="",q=false;for(var i=0;i<line.length;i++){var c=line[i];if(c==='"'){if(q&&line[i+1]==='"'){cur+='"';i++;}else q=!q;}else if((c===","||c===";")&&!q){out.push(cur.trim());cur="";}else cur+=c;}out.push(cur.trim());return out;}
+ var headers=split(lines[0]).map(function(h){return h.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();});
+ return {headers:headers,rows:lines.slice(1).map(split)};
+}
+function findCol(h,names){for(var i=0;i<names.length;i++){var idx=h.indexOf(names[i]);if(idx>=0)return idx;}return -1;}
+function parseAmount(s){return num(String(s||"").replace(/\s/g,"").replace("$","").replace(",", "."));}
+$("importFile").addEventListener("change",function(){
+ var file=this.files[0];importRows=[];$("importBtn").disabled=true;$("preview").style.display="none";$("importStatus").textContent="";if(!file)return;
+ var isExcel=/\.(xlsx|xls)$/i.test(file.name);
+ function processRows(matrix){
+   if(!matrix||!matrix.length)throw new Error("Le fichier ne contient aucune ligne.");
+   var headers=matrix[0].map(function(h){return String(h==null?"":h).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();});
+   var di=findCol(headers,["date","jour"]),ti=findCol(headers,["heure","time"]),ai=findCol(headers,["montantbrut","montant","brut","amount","prix"]),pi=findCol(headers,["paiement","payment","mode"]),tipi=findCol(headers,["pourboire","tip"]);
+   if(di<0||ti<0||ai<0)throw new Error("Colonnes obligatoires manquantes : date, heure et montant.");
+   function excelDate(v){
+     if(v instanceof Date&&!isNaN(v))return v.getFullYear()+"-"+pad(v.getMonth()+1)+"-"+pad(v.getDate());
+     if(typeof v==="number"&&window.XLSX&&XLSX.SSF){var d=XLSX.SSF.parse_date_code(v);if(d)return d.y+"-"+pad(d.m)+"-"+pad(d.d);}
+     var s=String(v==null?"":v).trim();
+     if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+     var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);if(m)return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);
+     return "";
+   }
+   function excelTime(v){
+     if(v instanceof Date&&!isNaN(v))return pad(v.getHours())+":"+pad(v.getMinutes());
+     if(typeof v==="number"&&v>=0&&v<1){var mins=Math.round(v*24*60);return pad(Math.floor(mins/60)%24)+":"+pad(mins%60);}
+     var s=String(v==null?"":v).trim().replace(".",":");var m=s.match(/^(\d{1,2}):(\d{1,2})/);return m?pad(m[1])+":"+pad(m[2]):"";
+   }
+   var errors=[],valid=[];
+   matrix.slice(1).forEach(function(r,i){
+     var date=excelDate(r[di]),time=excelTime(r[ti]),amount=parseAmount(r[ai]);
+     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time)||amount<0){errors.push("Ligne "+(i+2)+": date, heure ou montant invalide.");return;}
+     var pay=(pi>=0?String(r[pi]||"").toLowerCase().trim():"cash");
+     if(pay==="carte"||pay==="card"||pay==="credit"||pay==="crédit")pay="carte";
+     else if(pay==="coupon")pay="coupon";
+     else pay="cash";
+     valid.push({date:date,time:time,amount:amount,payment:pay,tip:tipi>=0?parseAmount(r[tipi]):0});
+   });
+   importRows=valid;
+   $("preview").style.display="block";
+   $("preview").innerHTML="<table><tr><th>Date</th><th>Heure</th><th>Montant</th><th>Paiement</th><th>Tip</th></tr>"+valid.slice(0,50).map(function(x){return "<tr><td>"+x.date+"</td><td>"+x.time+"</td><td>"+money(x.amount)+"</td><td>"+x.payment+"</td><td>"+money(x.tip)+"</td></tr>";}).join("")+"</table>";
+   $("importStatus").textContent=valid.length+" ligne(s) prête(s). "+(errors.length?errors.length+" ligne(s) refusée(s).":"Toutes les lignes sont valides.");
+   $("importBtn").disabled=valid.length===0;
+ }
+ if(isExcel){
+   if(typeof XLSX==="undefined"){ $("importStatus").textContent="❌ Le lecteur Excel n'est pas disponible. Vérifie ta connexion Internet."; return; }
+   var reader=new FileReader();
+   reader.onload=function(e){try{
+     var wb=XLSX.read(e.target.result,{type:"array",cellDates:true});
+     var ws=wb.Sheets[wb.SheetNames[0]];
+     var matrix=XLSX.utils.sheet_to_json(ws,{header:1,defval:"",raw:true});
+     processRows(matrix);
+   }catch(err){$("importStatus").textContent="❌ "+err.message;}};
+   reader.readAsArrayBuffer(file);
+ }else{
+   var reader2=new FileReader();
+   reader2.onload=function(){try{
+     var p=parseCSV(reader2.result),matrix=[p.headers].concat(p.rows);processRows(matrix);
+   }catch(err){$("importStatus").textContent="❌ "+err.message;}};
+   reader2.readAsText(file,"UTF-8");
+ }
+});$("importBtn").onclick=function(){if(!importRows.length)return;var added=0;importRows.forEach(function(r){entries.push({id:Date.now()+Math.floor(Math.random()*1000000)+added,timestamp:tsFor(r.date,r.time),date:r.date,time:r.time,type:"course",payment:r.payment,amount:r.amount,tps:0,tvq:0,redevance:0,tip:r.tip});added++;});save();selectedDate=importRows[0].date;$("rangeStart").value=rangeStart;$("rangeEnd").value=rangeEnd;var p=selectedDate.split("-");calendarDate=new Date(Number(p[0]),Number(p[1])-1,1);importRows=[];$("importBtn").disabled=true;$("importFile").value="";$("preview").style.display="none";$("importStatus").textContent=added+" course(s) importée(s).";render();};
+$("downloadTemplate").onclick=function(){var csv="date,heure,montant brut,paiement,pourboire\n2026-09-05,10:15,30,carte,2\n2026-09-05,11:05,25,cash,0\n";var blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="modele_courses_mygain.csv";a.click();URL.revokeObjectURL(a.href);};
+
+if(!rangeStart){
+  selectedDate=todayStr();rangeStart=selectedDate;rangeEnd=selectedDate;
+  $("rangeStart").value=selectedDate;$("rangeEnd").value=selectedDate;$("expenseDate").value=selectedDate;
+  var q=selectedDate.split("-");calendarDate=new Date(Number(q[0]),Number(q[1])-1,1);
+}
+$("courseTime").value=new Date().toTimeString().slice(0,5);resetForm();render();
+})();
+</script>
+</body>
+</html>
