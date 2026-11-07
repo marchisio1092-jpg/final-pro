@@ -1,4 +1,85 @@
-<script>
+<<script>
+(function () {
+  if (document.getElementById("mygainSafeExport")) return;
+
+  const btn = document.createElement("button");
+  btn.id = "mygainSafeExport";
+  btn.type = "button";
+  btn.textContent = "📦 Exporter toutes mes données";
+
+  btn.style.cssText = `
+    position:fixed;
+    bottom:18px;
+    left:12px;
+    right:12px;
+    z-index:99999;
+    padding:16px;
+    border:0;
+    border-radius:12px;
+    background:#2563eb;
+    color:white;
+    font-size:16px;
+    font-weight:bold;
+    box-shadow:0 4px 15px #0006;
+  `;
+
+  btn.addEventListener("click", async function () {
+    try {
+      const data = {};
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+
+        if (key && key.toLowerCase().includes("mygain")) {
+          data[key] = localStorage.getItem(key);
+        }
+      }
+
+      if (Object.keys(data).length === 0) {
+        alert("Aucune donnée MyGain trouvée dans ce navigateur.");
+        return;
+      }
+
+      const backup = {
+        application: "MyGain Chauffeur Pro",
+        date_exportation: new Date().toISOString(),
+        donnees: data
+      };
+
+      const fichier = new File(
+        [JSON.stringify(backup, null, 2)],
+        "MyGain-Sauvegarde-" +
+          new Date().toISOString().slice(0, 10) + ".json",
+        { type: "application/json" }
+      );
+
+      if (
+        navigator.share &&
+        navigator.canShare &&
+        navigator.canShare({ files: [fichier] })
+      ) {
+        await navigator.share({
+          files: [fichier],
+          title: "Sauvegarde MyGain"
+        });
+      } else {
+        const url = URL.createObjectURL(fichier);
+        const lien = document.createElement("a");
+        lien.href = url;
+        lien.download = fichier.name;
+        document.body.appendChild(lien);
+        lien.click();
+        lien.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 10000);
+      }
+    } catch (erreur) {
+      alert("L'exportation a échoué : " + erreur.message);
+    }
+  });
+
+  document.body.appendChild(btn);
+})();
+</script>script>
 (function () {
   if (document.getElementById("mygainSafeExport")) return;
 
