@@ -380,4 +380,50 @@ $("courseTime").value=new Date().toTimeString().slice(0,5);resetForm();render();
 })();
 </script>
 </body>
+<!-- SAUVEGARDE MYGAIN PRO -->
+<div style="text-align:center;padding:15px">
+  <button onclick="exportMyGainBackup()"
+    style="background:#4ade80;color:#000;padding:16px 25px;
+    border:0;border-radius:10px;font-weight:bold;font-size:17px;width:100%">
+    📥 EXPORTER TOUTES MES DONNÉES
+  </button>
+</div>
+
+<script>
+function exportMyGainBackup() {
+  try {
+    const backup = {
+      app: "MyGain Chauffeur Pro",
+      date: new Date().toISOString(),
+      storage: {}
+    };
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      backup.storage[key] = localStorage.getItem(key);
+    }
+
+    const blob = new Blob(
+      [JSON.stringify(backup, null, 2)],
+      { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "MyGain-Sauvegarde.json";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+
+    alert("Sauvegarde MyGain créée !");
+  } catch (error) {
+    alert("Erreur de sauvegarde : " + error.message);
+  }
+}
+</script>
+
 </html>
